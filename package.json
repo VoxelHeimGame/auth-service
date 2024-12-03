@@ -1,15 +1,21 @@
 {
-  "name": "auth-service",
-  "version": "1.0.50",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
-  },
-  "dependencies": {
-    "elysia": "latest"
-  },
-  "devDependencies": {
-    "bun-types": "latest"
-  },
-  "module": "src/index.js"
+	"name": "auth-service",
+	"version": "0.0.0",
+	"scripts": {
+		"build": "bun build ./src/index.ts --outdir ./build --target bun",
+		"dev": "bun run --watch src/index.ts",
+		"lint": "biome lint",
+		"prepare": "husky"
+	},
+	"dependencies": {
+		"elysia": "latest"
+	},
+	"devDependencies": {
+		"bun-types": "latest",
+		"@commitlint/cli": "19.6.0",
+		"@commitlint/config-conventional": "19.6.0",
+		"husky": "9.1.7",
+		"@biomejs/biome": "1.9.4"
+	},
+	"module": "src/index.js"
 }
