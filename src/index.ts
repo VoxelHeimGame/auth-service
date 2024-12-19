@@ -1,57 +1,71 @@
-import { Elysia } from 'elysia'
-import { swagger } from '@elysiajs/swagger'
-import { jwt } from '@elysiajs/jwt'
-import { cron } from '@elysiajs/cron'
-import { config } from './config'
-import { db } from './db'
-import { authRoutes } from './api/auth'
-import { userRoutes } from './api/user'
+import { Hono } from 'hono'
+import { prettyJSON } from 'hono/pretty-json'
+import { logger } from 'hono/logger'
+import { cors } from 'hono/cors'
+import { secureHeaders } from 'hono/secure-headers'
+import { authRoutes } from './routes/authRoutes'
+import { userRoutes } from './routes/userRoutes'
+import { openAPISpecs } from 'hono-openapi'
+import { apiReference } from '@scalar/hono-api-reference'
+import { CONFIG } from './config'
 
-const app = new Elysia()
-	.use(
-		swagger({
-			documentation: {
-				info: {
-					title: 'VoxelHeim Auth Service API',
-					version: '1.0.0',
-					description: 'Authentication and user management API for the VoxelHeim MMORPG'
-				},
-				tags: [
-					{ name: 'Auth', description: 'Authentication endpoints' },
-					{ name: 'User', description: 'User management endpoints' }
-				]
-			}
-		})
-	)
-	.use(
-		jwt({
-			name: 'accessJwt',
-			secret: config.accessTokenSecret,
-			exp: config.accessTokenExpiration
-		})
-	)
-	.use(
-		jwt({
-			name: 'refreshJwt',
-			secret: config.refreshTokenSecret,
-			exp: config.refreshTokenExpiration
-		})
-	)
-	.use(
-		cron({
-			name: 'clean-expired-tokens',
-			pattern: '0 0 * * *', // Run every day at midnight
-			async run() {
-				await db.query('DELETE FROM refresh_tokens WHERE expires_at <= NOW()')
-				console.log('Expired tokens cleaned')
-			}
-		})
-	)
-	.decorate('db', db)
-	.use(authRoutes)
-	.use(userRoutes)
-	.get('/', () => 'VoxelHeim Auth Service')
-	.get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))
-	.listen(config.port)
+// Extend Zod with OpenAPI
+import 'zod-openapi/extend'
 
-console.log(`🔒 Auth Service is running at ${app.server?.hostname}:${app.server?.port}`)
+const app = new Hono()
+
+// Middlewares
+app.use('*', prettyJSON())
+app.use('*', logger())
+app.use('*', cors())
+app.use('*', secureHeaders())
+
+// Routes
+app.route('/', authRoutes)
+app.route('/users', userRoutes)
+
+app.get('/', (c) => c.text(`VoxelHeim Auth Server (${CONFIG.NODE_ENV})`))
+
+// OpenAPI documentation
+app.get(
+	'/openapi',
+	openAPISpecs(app, {
+		documentation: {
+			info: {
+				title: 'VoxelHeim Auth API',
+				version: '1.0.0',
+				description: 'API for VoxelHeim MMORPG authentication and user management'
+			},
+			servers: [{ url: `http://localhost:${CONFIG.PORT}`, description: 'Local Server' }],
+			components: {
+				securitySchemes: {
+					bearerAuth: {
+						type: 'http',
+						scheme: 'bearer',
+						bearerFormat: 'JWT'
+					}
+				}
+			},
+			security: [{ bearerAuth: [] }]
+		}
+	})
+)
+
+// Scalar API Reference UI
+app.get(
+	'/docs',
+	apiReference({
+		spec: {
+			url: '/openapi'
+		},
+		theme: 'default'
+	})
+)
+
+const port = CONFIG.PORT
+console.log(`API Documentation available at: http://localhost:${port}/docs`)
+
+export default {
+	port,
+	fetch: app.fetch
+}

@@ -1,26 +1,35 @@
 {
-	"name": "auth-service",
-	"version": "0.0.0",
-	"scripts": {
-		"build": "bun build ./src/index.ts --outdir ./build --target bun",
-		"dev": "bun run --watch src/index.ts",
-		"lint": "biome lint",
-		"prepare": "husky"
-	},
-	"dependencies": {
-		"@elysiajs/cron": "^1.1.1",
-		"@elysiajs/jwt": "^1.1.1",
-		"@elysiajs/swagger": "^1.1.6",
-		"@types/pg": "^8.11.10",
-		"elysia": "latest",
-		"pg": "^8.13.1"
-	},
-	"devDependencies": {
-		"bun-types": "latest",
-		"@commitlint/cli": "19.6.0",
-		"@commitlint/config-conventional": "19.6.0",
-		"husky": "9.1.7",
-		"@biomejs/biome": "1.9.4"
-	},
-	"module": "src/index.js"
+  "name": "my-app",
+  "scripts": {
+    "dev": "NODE_ENV=development bun run --hot src/index.ts",
+    "live": "NODE_ENV=production bun run --hot src/index.ts",
+    "ptu": "NODE_ENV=test bun run --hot src/index.ts",
+    "build": "bun build ./src/index.ts --outdir ./build --target bun --minify",
+    "build:dev": "NODE_ENV=development bun run build",
+    "build:live": "NODE_ENV=production bun run build",
+    "build:ptu": "NODE_ENV=test bun run build",
+    "start:dev": "NODE_ENV=development bun run build/index.js",
+    "start:live": "NODE_ENV=production bun run build/index.js",
+    "start:ptu": "NODE_ENV=test bun run build/index.js",
+    "test": "NODE_ENV=test bun test",
+    "test:watch": "NODE_ENV=test bun test --watch",
+    "test:coverage": "NODE_ENV=test bun test --coverage",
+    "lint": "biome lint",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.4.2",
+    "@scalar/hono-api-reference": "^0.5.165",
+    "hono": "^4.6.14",
+    "hono-openapi": "^0.2.1",
+    "zod": "^3.24.1",
+    "zod-openapi": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@commitlint/cli": "19.6.1",
+    "@commitlint/config-conventional": "19.6.0",
+    "husky": "9.1.7",
+    "@biomejs/biome": "1.9.4"
+  }
 }
